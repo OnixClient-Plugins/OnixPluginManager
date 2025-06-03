@@ -6,5 +6,6 @@
   "plugin_version": "0.5.2",
   "game_version": "1.21.80",
   "runtime_version": 1,
-  "target_assembly": "OnixPluginManager.dll"
+  "target_assembly": "OnixPluginManager.dll",
+  "repository_url": "https://github.com/OnixClient-Plugins/OnixPluginManager"
 }
