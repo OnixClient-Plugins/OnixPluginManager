@@ -86,7 +86,11 @@ namespace OnixPluginManager {
                 plugin.StartLoadPlugin(mode);
             }
         }
-        public void StartUnloadPlugin() { }
+        public void StartUnloadPlugin(bool oneOff) { 
+            if (PublicPluginManager.GetPluginByUuid(Manifest.Uuid) is IOnixPlugin plugin) {
+                plugin.StartUnloadPlugin(oneOff);
+            }
+        }
 
     }
 

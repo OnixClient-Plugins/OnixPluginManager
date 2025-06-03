@@ -29,7 +29,7 @@ namespace OnixPluginManager {
         bool Enable();
         bool Disable();
         void StartLoadPlugin(PluginLoadMode loadMode);
-        void StartUnloadPlugin();
+        void StartUnloadPlugin(bool oneOff);
         
     }
 }

@@ -831,7 +831,7 @@ namespace OnixPluginManager {
                     } else if (tab == SelectedPluginTabs.LoadUnload) {
                         if (plugin?.IsInstalled ?? false && !(plugin?.IsBusy ?? false)) {
                             if (plugin?.IsLoaded ?? false) {
-                                plugin.StartUnloadPlugin();
+                                plugin.StartUnloadPlugin(false);
                             } else {
                                 plugin?.StartLoadPlugin(PluginLoadMode.ForceLoadAndDisable);
                             }

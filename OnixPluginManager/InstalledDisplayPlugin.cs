@@ -84,8 +84,8 @@ namespace OnixPluginManager {
             _plugin.StartLoadPlugin(mode);
         }
 
-        public void StartUnloadPlugin() {
-            _plugin.StartUnloadPlugin();
+        public void StartUnloadPlugin(bool oneOff) {
+            _plugin.StartUnloadPlugin(oneOff);
         }
     }
 }
