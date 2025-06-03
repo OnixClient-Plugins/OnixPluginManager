@@ -361,6 +361,8 @@ namespace OnixPluginManager {
             bool mouseIsInRightButton = rightButtonRect.Contains(Onix.Gui.MousePosition);
             gfx.FillRoundedRectangle(rightButtonRect, theme.Highlight.Color.MultiplyOpacity(_animations.GetOrCreate(plugin.GetUniqueKey("RightButtonHoverColor")).GetLinear(mouseIsInRightButton, 0.25f)), 3.0f);
 
+            bool ignoreClickInput = _isEnumOptionOpened.Any(x => x.Value);
+
             var pluginInstaller = PublicPluginManager.PluginInstaller;
             if (plugin.IsInstalled) {
                 bool hasUpdate = !CompatibilityUtils.IsSamePlugin(plugin, plugin.UpdatedPlugins?.LatestCompatiblePlugin ?? plugin);
@@ -418,7 +420,7 @@ namespace OnixPluginManager {
                 bool mouseIsInLeftButton = leftButtonRect.Contains(Onix.Gui.MousePosition);
                 gfx.FillRoundedRectangle(leftButtonRect, theme.Highlight.Color.MultiplyOpacity(_animations.GetOrCreate(plugin.GetUniqueKey("LeftButtonHoverColor")).GetLinear(mouseIsInLeftButton, 0.25f)), 3.0f);
 
-                if (ClickInput == InputKey.ClickType.Left && mouseIsInLeftButton) {
+                if (ClickInput == InputKey.ClickType.Left && mouseIsInLeftButton && !ignoreClickInput) {
                     if (plugin.IsBusy) {
                         return; // Do not allow clicking while busy
                     }
@@ -437,7 +439,7 @@ namespace OnixPluginManager {
                 }
             }
 
-            if (ClickInput == InputKey.ClickType.Left && mouseIsInRightButton) {
+            if (ClickInput == InputKey.ClickType.Left && mouseIsInRightButton && !ignoreClickInput) {
                 if (plugin.IsBusy) {
                     return; // Do not allow clicking while busy
                 }
@@ -448,7 +450,7 @@ namespace OnixPluginManager {
                 }
                 HandleAllInputs();
             }
-            if (position.Contains(Onix.Gui.MousePosition) && ClickInput == InputKey.ClickType.Left) {
+            if (position.Contains(Onix.Gui.MousePosition) && ClickInput == InputKey.ClickType.Left && !ignoreClickInput) {
                 OpenCurrentPlugin(plugin);
                 HandleAllInputs();
             }
@@ -574,6 +576,8 @@ namespace OnixPluginManager {
             var mouseInTextbox = textboxRect.Contains(Onix.Gui.MousePosition);
             if (ClickInput == InputKey.ClickType.Left) {
                 _pluginSearchBox.IsFocused = mouseInTextbox;
+                if (mouseInTextbox)
+                    HandleAllInputs();
             }
             float iconSize = 4.5f;
             float iconPadding = (textboxRect.Height - iconSize) / 2f;
@@ -927,14 +931,15 @@ namespace OnixPluginManager {
 
 
         public void RenderScreenContents(RendererTwoDimentional gfx, bool closing) {
+            gfx.FontUsage = FontUsage.UserInterface;
             float timeSinceOpened = (float)_screenRuntimeTracker.Elapsed.TotalSeconds;
             float sizeOfOnePixel = Onix.Gui.GuiScaleInverse;
             var theme = Onix.Client.ThemeV3;
             _deltaTime = Math.Min((float)_deltaTimeTracker.Elapsed.TotalSeconds, 1f);
             _deltaTimeTracker.Restart();
             Rect mainWindowBackgroundRect = Rect.FromCenter(RenderArea.Center, 308 + 6, 200.75f);
-
-            using (_ = gfx.PushTransformation(TransformationMatrix.Translate(-mainWindowBackgroundRect.Center) * TransformationMatrix.Scale(closing ? EasingAnimations.EaseOutExpo((0.23f-Math.Min(timeSinceOpened, 0.23f)) / 0.23f) : EasingAnimations.EaseInExpo(Math.Min(timeSinceOpened, 0.23f) / 0.23f)) * TransformationMatrix.Translate(mainWindowBackgroundRect.Center))) {
+            
+            using (_ = gfx.PushTransformation(TransformationMatrix.Translate(-mainWindowBackgroundRect.Center) * TransformationMatrix.Scale(closing ? EasingAnimations.EaseOutExpo((0.23f - Math.Min(timeSinceOpened, 0.23f)) / 0.23f) : EasingAnimations.EaseInExpo(Math.Min(timeSinceOpened, 0.23f) / 0.23f)) * TransformationMatrix.Translate(mainWindowBackgroundRect.Center))) {
                 using (_ = gfx.PushOpacity(EasingAnimations.Linear((closing ? 0.3f - Math.Min(timeSinceOpened, 0.3f) : Math.Min(timeSinceOpened, 0.3f)) / 0.3f))) {
                     gfx.FillRoundedRectangle(mainWindowBackgroundRect, theme.WindowBackground, 7.5f);
                     gfx.DrawRoundedRectangle(mainWindowBackgroundRect, theme.Outline, sizeOfOnePixel, 7.5f);
