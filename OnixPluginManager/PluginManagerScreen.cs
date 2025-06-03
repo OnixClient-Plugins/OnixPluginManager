@@ -432,7 +432,7 @@ namespace OnixPluginManager {
                         } else if (plugin.State == OnixRuntime.Plugin.PluginState.Enabled) {
                             plugin.Disable();
                         } else if (plugin.State == OnixRuntime.Plugin.PluginState.Unloaded) {
-                            plugin.StartLoadPlugin();
+                            plugin.StartLoadPlugin(PluginLoadMode.ForceLoadAndDisable);
                         }
                     }
                     HandleAllInputs();
@@ -833,7 +833,7 @@ namespace OnixPluginManager {
                             if (plugin?.IsLoaded ?? false) {
                                 plugin.StartUnloadPlugin();
                             } else {
-                                plugin?.StartLoadPlugin();
+                                plugin?.StartLoadPlugin(PluginLoadMode.ForceLoadAndDisable);
                             }
                         }
                     } else if (tab == SelectedPluginTabs.InstallUninstall) {
@@ -937,7 +937,9 @@ namespace OnixPluginManager {
             var theme = Onix.Client.ThemeV3;
             _deltaTime = Math.Min((float)_deltaTimeTracker.Elapsed.TotalSeconds, 1f);
             _deltaTimeTracker.Restart();
-            Rect mainWindowBackgroundRect = Rect.FromCenter(RenderArea.Center, 308 + 6, 200.75f);
+
+            Rect mainWindowBackgroundRect = Rect.FromCenter(RenderArea.Center, RenderArea.Width * 0.65416666666666f, RenderArea.Height * 0.74444444444444f);
+
             
             using (_ = gfx.PushTransformation(TransformationMatrix.Translate(-mainWindowBackgroundRect.Center) * TransformationMatrix.Scale(closing ? EasingAnimations.EaseOutExpo((0.23f - Math.Min(timeSinceOpened, 0.23f)) / 0.23f) : EasingAnimations.EaseInExpo(Math.Min(timeSinceOpened, 0.23f) / 0.23f)) * TransformationMatrix.Translate(mainWindowBackgroundRect.Center))) {
                 using (_ = gfx.PushOpacity(EasingAnimations.Linear((closing ? 0.3f - Math.Min(timeSinceOpened, 0.3f) : Math.Min(timeSinceOpened, 0.3f)) / 0.3f))) {

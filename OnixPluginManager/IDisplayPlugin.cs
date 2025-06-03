@@ -28,7 +28,7 @@ namespace OnixPluginManager {
 
         bool Enable();
         bool Disable();
-        void StartLoadPlugin();
+        void StartLoadPlugin(PluginLoadMode loadMode);
         void StartUnloadPlugin();
         
     }

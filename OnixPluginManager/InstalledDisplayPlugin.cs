@@ -80,8 +80,8 @@ namespace OnixPluginManager {
             return _plugin.DisablePlugin();
         }
 
-        public void StartLoadPlugin() {
-            _plugin.StartLoadPlugin();
+        public void StartLoadPlugin(PluginLoadMode mode) {
+            _plugin.StartLoadPlugin(mode);
         }
 
         public void StartUnloadPlugin() {
