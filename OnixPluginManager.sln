@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35312.102
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnixPluginManager", "OnixPluginManager\OnixPluginManager.csproj", "{D2701361-35F5-49C4-AB59-475AC6054550}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D2701361-35F5-49C4-AB59-475AC6054550}.Debug|x64.ActiveCfg = Debug|x64
+		{D2701361-35F5-49C4-AB59-475AC6054550}.Debug|x64.Build.0 = Debug|x64
+		{D2701361-35F5-49C4-AB59-475AC6054550}.Release|x64.ActiveCfg = Release|x64
+		{D2701361-35F5-49C4-AB59-475AC6054550}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = 1AA76058-6C4D-450A-AFB2-3A72586FB4CE
+	EndGlobalSection
+EndGlobal
