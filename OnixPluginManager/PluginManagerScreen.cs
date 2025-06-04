@@ -1015,6 +1015,7 @@ namespace OnixPluginManager {
             if (CloseCurrentPlugin()) return true;
             _cancellationTokenSource.Cancel();
             _screenRuntimeTracker.Restart();
+            PublicPluginManager.SaveRelevantPluginsInTheBackground();
             return false;
         }
         public override float GetCloseAnimationDuration() {
