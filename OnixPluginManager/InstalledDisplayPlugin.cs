@@ -41,7 +41,7 @@ namespace OnixPluginManager {
             if (UpdatedPlugins is null) {
                 return false;
             }
-            return CompatibilityUtils.IsSamePlugin(UpdatedPlugins.LatestCompatiblePlugin, this) && !UpdatedPlugins.LatestCompatiblePlugin.IsLocalVersion;
+            return CompatibilityUtils.IsSamePlugin(UpdatedPlugins.LatestCompatiblePlugin, this) && !(UpdatedPlugins.LatestCompatiblePlugin?.IsLocalVersion ?? true);
         }
 
         public async Task<RawImageData> GetIconDataTask() {

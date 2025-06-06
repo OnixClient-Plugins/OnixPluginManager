@@ -136,6 +136,10 @@ namespace OnixPluginManager {
             ZToA,
         }
 
+        public enum ScreenSubMenu {
+            Relevance
+        }
+
         private SvgRenderer[] TabIcons = [
             SvgRenderer.Create("TabBack.svg", @"<svg width=""24"" height=""24"" viewBox=""0 0 24 24"" fill=""none"" xmlns=""http://www.w3.org/2000/svg"">
 <path d=""M16 4L8 12L16 20"" stroke=""white"" stroke-width=""2"" stroke-linecap=""round""/>
@@ -167,7 +171,7 @@ namespace OnixPluginManager {
         private LinearAnimationTracker _animations = new LinearAnimationTracker();
         LinearAnimationTracker<MainTabs> _tabAnimationTracker = new();
         LinearAnimationTracker<SelectedPluginTabs> _tabSelectedAnimationTracker = new();
-        Dictionary<string, bool> _isEnumOptionOpened = new();
+        HashSet<ScreenSubMenu> _openedSubMenus = new();
 
         public PluginManagerScreen() : base("PluginManager", true, true) {
             _cancellationTokenSource = new CancellationTokenSource();
@@ -182,10 +186,16 @@ namespace OnixPluginManager {
 
         }
 
-        private void OpenCurrentPlugin(IDisplayPlugin plugin) {
+        public void OpenCurrentPlugin(IDisplayPlugin plugin) {
             _currentlyOpenedPluginIsNew = true;
             _currentlyOpenedPluginIsServer = !plugin.IsLocalVersion;
             _currentlyOpenedPluginUuid = plugin.Manifest.Uuid;
+        }
+
+        public void OpenCurrentPlugin(string plugin, bool localVersion) {
+            _currentlyOpenedPluginIsNew = true;
+            _currentlyOpenedPluginIsServer = !localVersion;
+            _currentlyOpenedPluginUuid = plugin;
         }
         private bool CloseCurrentPlugin() {
             if (_currentlyOpenedPluginUuid is null) {
@@ -270,14 +280,14 @@ namespace OnixPluginManager {
         }
         public static readonly Vec2 PluginCardSize = new Vec2(99.5f, 63.75f);
         public static readonly Vec2 PluginCardPadding = new Vec2(1f, 5f);
-        public void RenderPluginCard(RendererTwoDimentional gfx, OnixClientThemeV3 theme, Rect position, IDisplayPlugin plugin) {
+        public void RenderPluginCard(RendererCommon2D gfx, OnixClientThemeV3 theme, Rect position, IDisplayPlugin plugin) {
             float sizeOfOnePixel = Onix.Gui.GuiScaleInverse;
             var darkerColor = theme.Text.Color.WithOpacity(0.6f);
             ColorF pulsatingLoadColor = GetPulsatingLoadingColor(theme);
             gfx.FillRoundedRectangle(position, theme.Highlight, 5f, 20);
             gfx.DrawRoundedRectangle(position, theme.Outline, sizeOfOnePixel, 5f);
 
-            
+
 
             Rect bannerRect = new Rect(position.X + 2.5f, position.Y + 2.5f, position.Z - 2.5f, position.Y + 22.5f);
             var bannerTexture = GetPluginBannerTexture(gfx, plugin);
@@ -361,7 +371,9 @@ namespace OnixPluginManager {
             bool mouseIsInRightButton = rightButtonRect.Contains(Onix.Gui.MousePosition);
             gfx.FillRoundedRectangle(rightButtonRect, theme.Highlight.Color.MultiplyOpacity(_animations.GetOrCreate(plugin.GetUniqueKey("RightButtonHoverColor")).GetLinear(mouseIsInRightButton, 0.25f)), 3.0f);
 
-            bool ignoreClickInput = _isEnumOptionOpened.Any(x => x.Value);
+            //TODO: compatibility
+            bool ignoreClickInput = _openedSubMenus.Count > 0;
+            var compatibilityIssues = CompatibilityUtils.GetCompatibilityError(plugin.Manifest);
 
             var pluginInstaller = PublicPluginManager.PluginInstaller;
             if (plugin.IsInstalled) {
@@ -425,7 +437,7 @@ namespace OnixPluginManager {
                         return; // Do not allow clicking while busy
                     }
                     if (hasUpdate) {
-                        pluginInstaller.InstallPluginFromUrl(plugin.UpdatedPlugins?.LatestCompatiblePlugin.DownloadUrl ?? plugin.DownloadUrl, plugin.Manifest.Uuid);
+                        pluginInstaller.InstallPluginFromUrl(plugin.UpdatedPlugins?.LatestCompatiblePlugin?.DownloadUrl ?? plugin.DownloadUrl, plugin.Manifest.Uuid);
                     } else {
                         if (plugin.State == OnixRuntime.Plugin.PluginState.Disabled) {
                             plugin.Enable();
@@ -462,9 +474,19 @@ namespace OnixPluginManager {
                 gfx.RenderText(descriptionArea.TopLeft, darkerColor, descriptionText, 0.60f);
             }
 
+            if (compatibilityIssues.Count > 0) {
+                string compatibilityText = "Incompatible Plugin";
+                Vec2 compatibilityTextSize = gfx.MeasureText(compatibilityText, 0.85f);
+                Rect compatibilityRect = Rect.FromCenter(position.CenterX, position.Y + 2.5f + compatibilityTextSize.Y / 2f + 1f, compatibilityTextSize.X + 4f, compatibilityTextSize.Y + 2f);
+                gfx.FillRoundedRectangle(compatibilityRect, ColorF.Red, 3.0f);
+                gfx.RenderText(compatibilityRect.Center - compatibilityTextSize / 2f, ColorF.White, compatibilityText, 0.85f);
+
+                Onix.Client.SetTooltipText(string.Join("\n", compatibilityIssues), compatibilityRect);
+            }
+
         }
 
-        private void RenderPluginGrid(RendererTwoDimentional gfx, OnixClientThemeV3 theme, Rect position, List<IDisplayPlugin> plugins) {
+        private void RenderPluginGrid(RendererCommon2D gfx, OnixClientThemeV3 theme, Rect position, List<IDisplayPlugin> plugins) {
             int pluginsThatFitInRow = (int)((position.Width - PluginCardPadding.X) / (PluginCardSize.X + PluginCardPadding.X));
             int rowCount = (int)Math.Ceiling((float)plugins.Count / pluginsThatFitInRow);
             float totalHeight = rowCount * PluginCardSize.Y + (rowCount - 1) * PluginCardPadding.Y;
@@ -500,7 +522,7 @@ namespace OnixPluginManager {
             _scrollbarPanelLogic.RenderScrollbarsV3Themed(gfx);
         }
 
-        public void RenderTabs(RendererTwoDimentional gfx, OnixClientThemeV3 theme, Rect position) {
+        public void RenderTabs(RendererCommon2D gfx, OnixClientThemeV3 theme, Rect position) {
             float paddingBetweenTabs = 3.25f;
             float roundedRectRadius = 4.75f;
 
@@ -568,7 +590,7 @@ namespace OnixPluginManager {
         }
 
 
-        private void RenderFiltersTab(RendererTwoDimentional gfx, OnixClientThemeV3 theme, Rect position) {
+        private void RenderFiltersTab(RendererCommon2D gfx, OnixClientThemeV3 theme, Rect position) {
             float sizeOfOnePixel = Onix.Gui.GuiScaleInverse;
             float sizeAnimation = EasingAnimations.EaseInOutQuart(_animations.GetOrCreate("SearchboxSizeAnimation").GetLinear(_pluginSearchBox.IsFocused, 0.5f));
             var textboxRect = new Rect(0, position.Y, 55.75f + 40f * sizeAnimation, position.W);
@@ -588,24 +610,24 @@ namespace OnixPluginManager {
 
             // enumeration
 
-            var renderSubMenu = ((int Number, string Text, SvgRenderer? icon)[] options, int currentOptionValue, string menuName, SvgRenderer icon, Rect enumOptionSquare) => {
+            var renderSubMenu = ((int Number, string Text, SvgRenderer? icon)[] options, int currentOptionValue, ScreenSubMenu subMenu, SvgRenderer icon, Rect enumOptionSquare) => {
                 var currentOption = options.First(x => x.Number == currentOptionValue);
                 Vec2 iconSizes = new Vec2(6f);
                 float iconPadding = (enumOptionSquare.Height - iconSizes.Y) / 2f;
                 bool mouseInRect = enumOptionSquare.Contains(Onix.Gui.MousePosition);
                 var leftIconRect = Rect.FromCenter(enumOptionSquare.X + iconPadding + iconSizes.X / 2f, enumOptionSquare.CenterY, iconSizes.X, iconSizes.Y);
                 var rightIconRect = Rect.FromCenter(enumOptionSquare.Z - iconPadding - iconSizes.X / 2f, enumOptionSquare.CenterY, iconSizes.X, iconSizes.Y);
-
+                
+                string menuName = subMenu.ToString();
                 gfx.FillRoundedRectangle(enumOptionSquare, theme.Highlight.Color.MultiplyOpacity(1 + _animations.GetOrCreate(menuName + "Highlight").GetLinear(mouseInRect, 0.2f)), 4.75f, 20);
                 icon.RenderStatic(gfx, leftIconRect, 1f);
                 _downArrowIcon.RenderStatic(gfx, rightIconRect, 1f);
                 gfx.RenderText(new Vec2(enumOptionSquare.X + iconSizes.X + iconPadding + iconPadding, enumOptionSquare.CenterY), theme.Text, currentOption.Text, TextAlignment.Left, TextAlignment.Center);
 
-                _isEnumOptionOpened.TryAdd(menuName, false);
-                bool isMenuOpened = _isEnumOptionOpened[menuName];
+                bool isMenuOpened = _openedSubMenus.Contains(subMenu);
                 if (!isMenuOpened && mouseInRect && ClickInput == InputKey.ClickType.Left) {
                     HandleAllInputs();
-                    _isEnumOptionOpened[menuName] = true;
+                    _openedSubMenus.Add(subMenu);
                     isMenuOpened = true;
                 }
 
@@ -631,7 +653,7 @@ namespace OnixPluginManager {
                                 }
                                 if (mouseInOption && ClickInput == InputKey.ClickType.Left) {
                                     HandleAllInputs();
-                                    _isEnumOptionOpened[menuName] = false;
+                                    _openedSubMenus.Remove(subMenu);
                                     return option.Number;
                                 }
                             }
@@ -640,7 +662,7 @@ namespace OnixPluginManager {
                     if (ClickInput == InputKey.ClickType.Left && !menuRect.Contains(Onix.Gui.MousePosition)) {
                         // clicked elsewhere, close the menu
                         HandleAllInputs();
-                        _isEnumOptionOpened[menuName] = false;
+                        _openedSubMenus.Remove(subMenu);
                     }
                 }
 
@@ -664,7 +686,7 @@ namespace OnixPluginManager {
                 _ => _relevanceIcon
             };
             var pluginRelevanceRect = Rect.FromSize(position.TopLeft, 51.25f, position.Height);
-            int newlySelectedRelevance = renderSubMenu(relevancyOptions, currentRelevance, "Relevance", selectedRelevanceIcon, pluginRelevanceRect);
+            int newlySelectedRelevance = renderSubMenu(relevancyOptions, currentRelevance, ScreenSubMenu.Relevance, selectedRelevanceIcon, pluginRelevanceRect);
             if (newlySelectedRelevance != Int32.MaxValue) {
                 if (_currentTab == MainTabs.Discover)
                     _pluginRelevanceDiscover = (PluginRelevances)newlySelectedRelevance;
@@ -735,7 +757,7 @@ namespace OnixPluginManager {
             return result;
         }
 
-        public void RenderSelectedPluginTabs(RendererTwoDimentional gfx, OnixClientThemeV3 theme, Rect position) {
+        public void RenderSelectedPluginTabs(RendererCommon2D gfx, OnixClientThemeV3 theme, Rect position) {
             var plugin = Sources.GetPluginByUuid(_currentlyOpenedPluginUuid ?? "", _currentlyOpenedPluginIsServer);
             float paddingBetweenTabs = 3.25f;
             float roundedRectRadius = 4.75f;
@@ -903,7 +925,7 @@ namespace OnixPluginManager {
             }
         }
 
-        public void RenderPluginPage(RendererTwoDimentional gfx, OnixClientThemeV3 theme, Rect position) {
+        public void RenderPluginPage(RendererCommon2D gfx, OnixClientThemeV3 theme, Rect position) {
             var plugin = Sources.GetPluginByUuid(_currentlyOpenedPluginUuid ?? "", _currentlyOpenedPluginIsServer);
             if (plugin is null) return;
             if (plugin.IsLocalVersion) {
@@ -930,7 +952,7 @@ namespace OnixPluginManager {
         }
 
 
-        public void RenderScreenContents(RendererTwoDimentional gfx, bool closing) {
+        public void RenderScreenContents(RendererCommon2D gfx, bool closing) {
             gfx.FontUsage = FontUsage.UserInterface;
             float timeSinceOpened = (float)_screenRuntimeTracker.Elapsed.TotalSeconds;
             float sizeOfOnePixel = Onix.Gui.GuiScaleInverse;
@@ -981,10 +1003,10 @@ namespace OnixPluginManager {
         }
 
 
-        public override void OnRender(RendererTwoDimentional gfx) {
+        public override void OnRender(RendererCommon2D gfx) {
             RenderScreenContents(gfx, false);
         }
-        public override void OnRenderClosing(RendererTwoDimentional gfx) {
+        public override void OnRenderClosing(RendererCommon2D gfx) {
             RenderScreenContents(gfx, true);
         }
 
@@ -1004,7 +1026,7 @@ namespace OnixPluginManager {
             _tabSelectedAnimationTracker.ResetAll();
             _tabAnimationTracker.ResetAll();
             _animations.ResetAll();
-            _isEnumOptionOpened.Clear();
+            _openedSubMenus.Clear();
             _pluginSearchBox.Text = string.Empty;
             _cancellationTokenSource = new();
             Sources = new PluginSources(_cancellationTokenSource.Token);

@@ -4,9 +4,9 @@ using OnixRuntime.Plugin;
 namespace OnixPluginManager {
 
     internal class UpdatedDisplayPlugins {
-        public IDisplayPlugin LatestCompatiblePlugin { get; }
+        public IDisplayPlugin? LatestCompatiblePlugin { get; }
         public IDisplayPlugin LatestIncompatiblePlugin { get; }
-        public UpdatedDisplayPlugins(IDisplayPlugin latestCompatiblePlugin, IDisplayPlugin latestIncompatiblePlugin) {
+        public UpdatedDisplayPlugins(IDisplayPlugin? latestCompatiblePlugin, IDisplayPlugin latestIncompatiblePlugin) {
             LatestCompatiblePlugin = latestCompatiblePlugin;
             LatestIncompatiblePlugin = latestIncompatiblePlugin;
         }
@@ -56,7 +56,10 @@ namespace OnixPluginManager {
                    a.RuntimeVersion == b.RuntimeVersion &&
                    a.GameVersion == b.GameVersion;
         }
-        public static bool IsSamePlugin(IDisplayPlugin a, IDisplayPlugin b) {
+        public static bool IsSamePlugin(IDisplayPlugin? a, IDisplayPlugin? b) {
+            if (a is null || b is null) {
+                return a is null && b is null;
+            }
             return IsSamePlugin(a.Manifest, b.Manifest);
         }
         
@@ -75,7 +78,7 @@ namespace OnixPluginManager {
                 }
             }
 
-            if (latestCompatible == null || latestIncompatible == null) {
+            if (latestIncompatible == null) {
                 throw new InvalidOperationException("No compatible or incompatible plugins found.");
             }
 

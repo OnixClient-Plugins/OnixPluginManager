@@ -45,11 +45,16 @@
                 if (source.IsEnabled) {
                     var plugin = source.GetPluginByUuid(uuid);
                     if (plugin is not null) {
-                        return GetBestVersionOf(plugin);
+                        try {
+                            return GetBestVersionOf(plugin);
+                        } catch (Exception) {
+                            // If something goes wrong, just return null
+                            // this is likely there are none that are compatible
+                            return plugin;
+                        }
                     }
                 }
             }
-
             return null;
         }
 
@@ -69,18 +74,25 @@
             if (allVersions.Count == 0) {
                 return plugin;
             }
-            var result = CompatibilityUtils.GetLatestPluginFor(allVersions);
-            if (CompatibilityUtils.IsSamePlugin(result.LatestCompatiblePlugin, plugin)) {
+            try {
+                var result = CompatibilityUtils.GetLatestPluginFor(allVersions);
+                if (CompatibilityUtils.IsSamePlugin(result.LatestCompatiblePlugin, plugin)) {
+                    plugin.UpdatedPlugins = null;
+                    return plugin;
+                }
+                if (plugin.IsLocalVersion) {
+                    plugin.UpdatedPlugins = result;
+                    return plugin;
+                } else if (result.LatestCompatiblePlugin?.IsLocalVersion ?? false) {
+                    return plugin;
+                }
+                return result.LatestCompatiblePlugin ?? plugin;
+            } catch (Exception) {
+                // If something goes wrong, just return the original plugin
+                // this is likely there are none that are compatible
                 plugin.UpdatedPlugins = null;
                 return plugin;
             }
-            if (plugin.IsLocalVersion) {
-                plugin.UpdatedPlugins = result;
-                return plugin;
-            } else if (result.LatestCompatiblePlugin.IsLocalVersion) {
-                return plugin;
-            }
-            return result.LatestCompatiblePlugin;
         }
 
         public int GetDownloadCount(string uuid) {
@@ -88,18 +100,22 @@
         }
 
         public IDisplayPlugin? GetPluginByUuid(string uuid, bool isServerVersion) {
-            var plugins = GetAllVersionsOf(uuid).ToList();
-            if (plugins.Count == 0) {
+            try {
+                var plugins = GetAllVersionsOf(uuid).ToList();
+                if (plugins.Count == 0) {
+                    return null;
+                }
+                if (!isServerVersion) {
+                    var serverPlugin = plugins.FirstOrDefault(p => p.IsLocalVersion);
+                    if (serverPlugin is not null) {
+                        serverPlugin.UpdatedPlugins = CompatibilityUtils.GetLatestPluginFor(plugins);
+                        return serverPlugin;
+                    }
+                }
+                return CompatibilityUtils.GetLatestPluginFor(plugins.Where(x => !x.IsLocalVersion)).LatestCompatiblePlugin;
+            } catch (Exception) {
                 return null;
             }
-            if (!isServerVersion) {
-                var serverPlugin = plugins.FirstOrDefault(p => p.IsLocalVersion);
-                if (serverPlugin is not null) {
-                    serverPlugin.UpdatedPlugins = CompatibilityUtils.GetLatestPluginFor(plugins);
-                    return serverPlugin;
-                }
-            }
-            return CompatibilityUtils.GetLatestPluginFor(plugins.Where(x => !x.IsLocalVersion)).LatestCompatiblePlugin;
         }
         
     }

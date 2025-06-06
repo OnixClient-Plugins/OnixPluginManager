@@ -15,6 +15,7 @@ namespace OnixPluginManager {
 #if DEBUG 
             //base.WaitForDebuggerToBeAttached();
 #endif
+
         }
 
         protected override void OnLoaded() {
@@ -25,6 +26,10 @@ namespace OnixPluginManager {
             Onix.Events.Game.UriInvokedRaw += (rawUri) => {
                 if (rawUri == "onixclient://OpenPluginsManagerUi") {
                     ManagerScreen.OpenScreen();
+                } else if (rawUri.StartsWith("onixclient://OpenPluginsManagerUi?OpenPlugin=")) {
+                    string pluginUuid = rawUri.Substring("onixclient://OpenPluginsManagerUi?OpenPlugin=".Length);
+                    ManagerScreen.OpenScreen();
+                    ManagerScreen.OpenCurrentPlugin(pluginUuid, true);
                 }
             };
         }
