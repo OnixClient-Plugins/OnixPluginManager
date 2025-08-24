@@ -5,8 +5,9 @@
   "plugin_description": "The official Onix Client plugin manager UI.",
   "plugin_version": "0.6.1",
   "game_version": "1.21.80",
-  "runtime_version": 3,
+  "runtime_version": 4,
   "target_assembly": "OnixPluginManager.dll",
   "repository_url": "https://github.com/OnixClient-Plugins/OnixPluginManager",
-  "has_toggle_key": false
+  "has_toggle_key": false,
+  "is_plugin_manager_ui": true
 }
