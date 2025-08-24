@@ -1,3 +1,4 @@
+using OnixRuntime.Plugin;
 using System.Diagnostics;
 
 namespace OnixPluginManager {
@@ -35,11 +36,12 @@ namespace OnixPluginManager {
 
 
         public override string Name => $"Remote ({Endpoint})";
+        public override bool CanRemove => !Endpoint.StartsWith(OnixPluginInstaller.OfficialRepositoryUrl);
 
         public override IDisplayPlugin? GetPluginByUuid(string uuid) {
-           if (Plugins?.IsCompletedSuccessfully ?? false)
-               return Plugins.Result.FirstOrDefault(p => p.Manifest.Uuid == uuid);
-           return null; // Not yet fetched or not in this repository
+            if (Plugins?.IsCompletedSuccessfully ?? false)
+                return Plugins.Result.FirstOrDefault(p => p.Manifest.Uuid == uuid);
+            return null; // Not yet fetched or not in this repository
         }
 
         public override IEnumerable<IDisplayPlugin> GetPluginsForFrame() {

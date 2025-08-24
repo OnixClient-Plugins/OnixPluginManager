@@ -1,7 +1,7 @@
 ﻿using OnixRuntime.Plugin;
 
 namespace OnixPluginManager {
-    
+
     internal class InstalledPluginSource : PluginSourceBase {
         public InstalledPluginSource(CancellationToken cancellationToken, bool isEnabled) : base(cancellationToken, isEnabled) { }
 
@@ -21,5 +21,6 @@ namespace OnixPluginManager {
 
         public override bool IsRemoteSource => false;
         public override string Name => "Installed";
+        public override bool CanRemove => false;
     }
 }

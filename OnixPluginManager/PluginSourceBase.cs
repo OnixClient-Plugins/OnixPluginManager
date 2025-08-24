@@ -10,6 +10,7 @@
         }
 
         public abstract string Name { get; }
+        public abstract bool CanRemove { get; }
         public abstract IDisplayPlugin? GetPluginByUuid(string uuid);
         public abstract IEnumerable<IDisplayPlugin> GetPluginsForFrame();
         public abstract bool IsRemoteSource { get; }
