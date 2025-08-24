@@ -1,18 +1,22 @@
-﻿namespace OnixPluginManager {
+﻿using OnixRuntime.Plugin;
+
+namespace OnixPluginManager {
     internal class PluginSources {
         public CancellationToken CancellationToken { get; }
 
         public InstalledPluginSource InstalledSource { get; }
-        public RemotePluginSource RemoteSource { get; }
+        public List<RemotePluginSource> RemoteSources { get; }
         public List<PluginSourceBase> Sources { get; } = new();
 
         public PluginSources(CancellationToken cancellationToken) {
             CancellationToken = cancellationToken;
             InstalledSource = new InstalledPluginSource(cancellationToken, true);
-            RemoteSource = new RemotePluginSource("https://plugin.onixclient.com", cancellationToken, true);
+            RemoteSources = PublicPluginManager.PluginInstaller.GetCuratedRemoteSourceUrls().Select(url => new RemotePluginSource(url, cancellationToken, true)).ToList();
 
             AddSource(InstalledSource);
-            AddSource(RemoteSource);
+            foreach (var remoteSource in RemoteSources) {
+                AddSource(remoteSource);
+            }
         }
 
         public void AddSource(PluginSourceBase source) {
