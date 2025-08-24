@@ -5,7 +5,7 @@ namespace OnixPluginManager {
     public class OnixPluginManager : OnixPluginBase {
         public static OnixPluginManager Instance { get; private set; } = null!;
         public static OnixPluginManagerConfig Config { get; private set; } = null!;
-        public PluginManagerScreen ManagerScreen = null!;
+        public PluginManagerScreen? ManagerScreen = null;
 
         public OnixPluginManager(OnixPluginInitInfo initInfo) : base(initInfo) {
             Instance = this;
@@ -19,7 +19,7 @@ namespace OnixPluginManager {
         }
 
         protected override void OnLoaded() {
-            Config = new OnixPluginManagerConfig(PluginDisplayModule);
+            Config = new OnixPluginManagerConfig(PluginDisplayModule, true);
             
             //Listen to events here.
             ManagerScreen = new PluginManagerScreen();
@@ -38,11 +38,15 @@ namespace OnixPluginManager {
         }
 
         protected override void OnDisabled() {
-            ManagerScreen.CloseScreen();
+            if (ManagerScreen is not null) {
+                ManagerScreen.CloseScreen();
+            }
         }
 
         protected override void OnUnloaded() {
-            ManagerScreen.CloseScreen();
+            if (ManagerScreen is not null) {
+                ManagerScreen.CloseScreen();
+            }
         }
     }
 }
