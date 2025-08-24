@@ -442,7 +442,11 @@ namespace OnixPluginManager {
                         if (plugin.State == OnixRuntime.Plugin.PluginState.Disabled) {
                             plugin.Enable();
                         } else if (plugin.State == OnixRuntime.Plugin.PluginState.Enabled) {
-                            plugin.Disable();
+                            if (plugin.Manifest.Uuid != OnixPluginManager.Instance.CurrentPluginManifest.Uuid) {
+                                plugin.Disable();
+                            } else {
+                                Onix.Client.NotifyBanner("Cannot Disable Manager", "You can't disable the UI from the UI as it would make it too error prone.");
+                            }
                         } else if (plugin.State == OnixRuntime.Plugin.PluginState.Unloaded) {
                             plugin.StartLoadPlugin(PluginLoadMode.ForceLoadAndDisable);
                         }
@@ -456,7 +460,11 @@ namespace OnixPluginManager {
                     return; // Do not allow clicking while busy
                 }
                 if (plugin.IsInstalled) {
-                    pluginInstaller.UninstallPlugin(plugin.Manifest.Uuid, Onix.Input.IsDown(InputKey.Type.Shift));
+                    if (plugin.Manifest.Uuid != OnixPluginManager.Instance.CurrentPluginManifest.Uuid) {
+                        pluginInstaller.UninstallPlugin(plugin.Manifest.Uuid, Onix.Input.IsDown(InputKey.Type.Shift));
+                    } else {
+                        Onix.Client.NotifyBanner("Cannot Uninstall Manager", "You can't uninstall the UI from the UI as it would make it too error prone.");
+                    }
                 } else {
                     pluginInstaller.InstallPluginFromUrl(plugin.DownloadUrl);
                 }
@@ -843,27 +851,39 @@ namespace OnixPluginManager {
                         if (!CloseCurrentPlugin())
                             CloseScreen();
                     } else if (tab == SelectedPluginTabs.EnableDisable) {
-                        if (plugin?.IsInstalled ?? false && !(plugin?.IsBusy ?? false)) {
-                            if (plugin?.State == PluginState.Enabled) {
-                                plugin.Disable();
-                            } else if (plugin?.State == PluginState.Disabled) {
-                                plugin.Enable();
+                        if (plugin?.Manifest.Uuid != OnixPluginManager.Instance.CurrentPluginManifest.Uuid) {
+                            if (plugin?.IsInstalled ?? false && !(plugin?.IsBusy ?? false)) {
+                                if (plugin?.State == PluginState.Enabled) {
+                                    plugin.Disable();
+                                } else if (plugin?.State == PluginState.Disabled) {
+                                    plugin.Enable();
+                                }
                             }
+                        } else {
+                            Onix.Client.NotifyBanner("Cannot Enable/Disable Manager", "You can't enable/disable the UI from the UI as it would make it too error prone.");
                         }
                     } else if (tab == SelectedPluginTabs.LoadUnload) {
-                        if (plugin?.IsInstalled ?? false && !(plugin?.IsBusy ?? false)) {
-                            if (plugin?.IsLoaded ?? false) {
-                                plugin.StartUnloadPlugin(false);
-                            } else {
-                                plugin?.StartLoadPlugin(PluginLoadMode.ForceLoadAndDisable);
+                        if (plugin?.Manifest.Uuid != OnixPluginManager.Instance.CurrentPluginManifest.Uuid) {
+                            if (plugin?.IsInstalled ?? false && !(plugin?.IsBusy ?? false)) {
+                                if (plugin?.IsLoaded ?? false) {
+                                    plugin.StartUnloadPlugin(false);
+                                } else {
+                                    plugin?.StartLoadPlugin(PluginLoadMode.ForceLoadAndDisable);
+                                }
                             }
+                        } else {
+                            Onix.Client.NotifyBanner("Cannot Load/Unload Manager", "You can't load/unload the UI from the UI as it would make it too error prone.");
                         }
                     } else if (tab == SelectedPluginTabs.InstallUninstall) {
                         if (!(plugin?.IsBusy ?? false)) {
                             if (plugin?.IsInstalled ?? false) {
                                 _currentlyOpenedPluginIsServer = true;
                                 _currentlyOpenedPluginIsNew = true;
-                                PublicPluginManager.PluginInstaller.UninstallPlugin(plugin.Manifest.Uuid, Onix.Input.IsDown(InputKey.Type.Shift));
+                                if (plugin?.Manifest.Uuid != OnixPluginManager.Instance.CurrentPluginManifest.Uuid) {
+                                    PublicPluginManager.PluginInstaller.UninstallPlugin(plugin!.Manifest.Uuid, Onix.Input.IsDown(InputKey.Type.Shift));
+                                } else {
+                                    Onix.Client.NotifyBanner("Cannot Uninstall Manager", "You can't uninstall the UI from the UI as it would make it too error prone.");
+                                }
                             } else {
                                 _currentlyOpenedPluginIsServer = false;
                                 _currentlyOpenedPluginIsNew = true;
@@ -871,7 +891,7 @@ namespace OnixPluginManager {
                             }
                         }
                     } else if (tab == SelectedPluginTabs.OnlineView) {
-                            _currentlyOpenedPluginIsServer = !_currentlyOpenedPluginIsServer;
+                        _currentlyOpenedPluginIsServer = !_currentlyOpenedPluginIsServer;
                     } else if (tab == SelectedPluginTabs.PackagePlugin) {
                         if (!(plugin?.IsBusy ?? false)) {
                             var packageTask = PublicPluginManager.PluginInstaller.PackagePlugin(plugin!.Manifest.Uuid);
